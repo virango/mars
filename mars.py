@@ -34,6 +34,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
     log(f"[MQTT] Verbunden mit Code {reason_code}")
     client.subscribe("hame_energy/HMA-1/device/2419720d2e06/ctrl")
     client.subscribe("powermeter_balkon/status/switch:0")
+    client.subscribe("homeassistant/status")
 
 def on_connect_fail(client, userdata):
     log("[MQTT] Verbindung fehlgeschlagen")
@@ -41,12 +42,62 @@ def on_connect_fail(client, userdata):
 def on_disconnect(client, userdata, reason_code, properties=None, packet_from_broker=None):
     log(f"[MQTT] Verbindung getrennt. Reason Code: {reason_code}")
 
+def publish_homeassistant_discovery(mqttc):
+    try:
+        base_device = {
+            "identifiers": ["smartmeter_xyz"],
+            "name": "Smartmeter",
+            "manufacturer": "Custom",
+            "model": "MQTT Meter"
+        }
+
+        sensors = [
+            ("homeassistant/sensor/smartmeter_phase1/config", {
+                "name": "Smartmeter Phase 1",
+                "state_topic": "smartmeter/values/phase1",
+                "unit_of_measurement": "W",
+                "device_class": "power",
+                "state_class": "measurement",
+                "unique_id": "smartmeter_phase1",
+                "device": base_device
+            }),
+            ("homeassistant/sensor/smartmeter_phase2/config", {
+                "name": "Smartmeter Phase 2",
+                "state_topic": "smartmeter/values/phase2",
+                "unit_of_measurement": "W",
+                "device_class": "power",
+                "state_class": "measurement",
+                "unique_id": "smartmeter_phase2",
+                "device": base_device
+            }),
+            ("homeassistant/sensor/smartmeter_phase3/config", {
+                "name": "Smartmeter Phase 3",
+                "state_topic": "smartmeter/values/phase3",
+                "unit_of_measurement": "W",
+                "device_class": "power",
+                "state_class": "measurement",
+                "unique_id": "smartmeter_phase3",
+                "device": base_device
+            })
+        ]
+
+        for topic, payload in sensors:
+            mqttc.publish(topic, json.dumps(payload), retain=True)
+            log(f"[HomeAssistant] Discovery veröffentlicht: {topic}")
+    except Exception as e:
+        log(f"[HomeAssistant] Fehler beim Senden der Discovery-Topics: {e}")
+
 def on_message(client, userdata, msg):
     try:
-        if msg.topic.startswith("hame_energy"):
-            process_battery_data(msg.payload.decode())
-        elif msg.topic.startswith("powermeter_balkon"):
-            process_output_power_data(msg.payload.decode())
+        topic = msg.topic
+        payload = msg.payload.decode().strip()
+        if topic.startswith("hame_energy"):
+            process_battery_data(payload)
+        elif topic.startswith("powermeter_balkon"):
+            process_output_power_data(payload)
+        elif topic == "homeassistant/status" and payload == "online":
+            log("[HomeAssistant] online empfangen — sende Discovery-Topics")
+            publish_homeassistant_discovery(client)
     except Exception as e:
         log(f"[MQTT] Fehler beim Verarbeiten der Nachricht: {e}")
 
