@@ -17,8 +17,8 @@ REACTIVE_POWER_FACTOR = 1.0
 # Globale Variablen
 broker_ip = os.getenv("MQTT_BROKER_IP", "192.168.178.6")
 broker_port = int(os.getenv("MQTT_BROKER_PORT", "1883"))
-smartemeter_ip = os.getenv("SMARTMETER_IP", "192.168.178.53")
-smartemeter_port = int(os.getenv("SMARTMETER_PORT", "12345"))
+smartmeter_ip = os.getenv("SMARTMETER_IP", "192.168.178.53")
+smartmeter_port = int(os.getenv("SMARTMETER_PORT", "12345"))
 
 phase1 = -1
 phase2 = -1
