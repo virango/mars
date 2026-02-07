@@ -35,6 +35,8 @@ def on_connect(client, userdata, flags, reason_code, properties):
     client.subscribe("hame_energy/HMA-1/device/2419720d2e06/ctrl")
     client.subscribe("powermeter_balkon/status/switch:0")
     client.subscribe("homeassistant/status")
+    log("[HomeAssistant] Sende Discovery-Topics nach Verbindungsaufbau")
+    publish_homeassistant_discovery(client)
 
 def on_connect_fail(client, userdata):
     log("[MQTT] Verbindung fehlgeschlagen")
